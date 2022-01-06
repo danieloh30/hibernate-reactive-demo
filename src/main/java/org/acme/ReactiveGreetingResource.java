@@ -7,12 +7,10 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import org.jboss.resteasy.reactive.RestPath;
 
-import io.quarkus.hibernate.reactive.panache.Panache;
+import io.quarkus.hibernate.reactive.panache.common.runtime.ReactiveTransactional;
 import io.smallrye.mutiny.Uni;
 
 @Path("/fruits")
@@ -31,16 +29,17 @@ public class ReactiveGreetingResource {
     }
 
     @POST
-    public Uni<Response> create(Fruit fruit) {
-        return Panache.withTransaction(fruit::persist)
-            .replaceWith(Response.ok(fruit).status(Status.CREATED)::build);
+    @ReactiveTransactional
+    public Uni<Fruit> create(Fruit fruit) {
+        return Fruit.persist(fruit).replaceWith(fruit);
     }
 
     @DELETE
     @Path("{id}")
-    public Uni<Response> delete(@RestPath Long id) {
-        return Panache.withTransaction(() -> Fruit.deleteById(id))
-            .map(deleted -> deleted ? Response.ok().status(Status.NO_CONTENT).build()
-                                    : Response.ok().status(Status.NOT_FOUND).build());
+    @ReactiveTransactional
+    public Uni<Void> delete(@RestPath Long id) {
+        return Fruit.deleteById(id).replaceWithVoid();
+        
+        
     }
 }
